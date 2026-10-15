@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TestFlow – App prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#17233B; --muted:#5A667D; --line:#D9DEE7;
+  --brand:#2F3E9E; --brand-ink:#FFFFFF; --pass:#2E8B6E; --fail:#D2453F; --skip:#D9A13B; --idle:#C9D0DC;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1626; --surface:#18223A; --ink:#E7EBF3; --muted:#A3AEC4; --line:#2A3654;
+  --brand:#7C8CF0; --brand-ink:#0F1626; --pass:#4CC39A; --fail:#F0716B; --skip:#E9BC5F; --idle:#34405E; color-scheme:dark;}}
+:root[data-theme="dark"]{--bg:#0F1626; --surface:#18223A; --ink:#E7EBF3; --muted:#A3AEC4; --line:#2A3654;
+  --brand:#7C8CF0; --brand-ink:#0F1626; --pass:#4CC39A; --fail:#F0716B; --skip:#E9BC5F; --idle:#34405E; color-scheme:dark;}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--font)}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:4px}
+button{font:inherit;cursor:pointer}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-0.01em}
+h2{font-size:18px;margin:0 0 12px}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono);font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:8px;border:2px solid var(--brand);font-weight:600;font-size:14px;text-decoration:none}
+.btn-primary{background:var(--brand);color:var(--brand-ink)}
+.btn-ghost{background:transparent;color:var(--brand)}
+.btn-danger{background:transparent;color:var(--fail);border-color:var(--fail)}
+.btn-sm{padding:6px 10px;font-size:13px}
+label{display:block;font-size:14px;font-weight:600;margin:12px 0 6px}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:80px;resize:vertical}
+.err{color:var(--fail);font-size:13px;min-height:18px;margin-top:6px}
+
+/* auth */
+.auth{min-height:100%;display:grid;place-items:center;padding:24px}
+.auth-box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:32px;width:100%;max-width:420px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;color:var(--ink);text-decoration:none}
+.logo-mark{display:grid;grid-template-columns:repeat(3,7px);gap:3px}
+.logo-mark span{width:7px;height:7px;border-radius:2px;background:var(--pass)}
+.logo-mark span:nth-child(5){background:var(--fail)} .logo-mark span:nth-child(8){background:var(--skip)}
+.tabs{display:flex;border:1px solid var(--line);border-radius:999px;padding:4px;margin:22px 0 6px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font-weight:600;padding:8px;border-radius:999px}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.full{width:100%;justify-content:center;margin-top:16px}
+.divider{text-align:center;color:var(--muted);font-size:13px;margin:16px 0 0}
+
+/* shell */
+.shell{display:grid;grid-template-columns:232px 1fr;min-height:100%}
+aside{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;align-items:center;gap:10px;text-align:left;background:none;border:0;color:var(--muted);padding:10px 12px;border-radius:8px;font-weight:500}
+.nav button:hover{background:var(--bg);color:var(--ink)}
+.nav button[aria-current="page"]{background:color-mix(in srgb,var(--brand) 12%,transparent);color:var(--brand);font-weight:600}
+.who{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;font-size:14px}
+.who b{display:block}
+.plan-pill{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--brand) 14%,transparent);color:var(--brand)}
+main{padding:28px 32px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+
+/* cards & tables */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.tile .n{font-size:30px;font-weight:700;line-height:1.1}
+.tile .l{color:var(--muted);font-size:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:20px}
+.cols{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--muted);font-weight:600;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.t-pass{background:color-mix(in srgb,var(--pass) 16%,transparent);color:var(--pass)}
+.t-fail{background:color-mix(in srgb,var(--fail) 16%,transparent);color:var(--fail)}
+.t-skip{background:color-mix(in srgb,var(--skip) 20%,transparent);color:color-mix(in srgb,var(--skip) 70%,var(--ink))}
+.t-idle{background:var(--bg);color:var(--muted)}
+.t-brand{background:color-mix(in srgb,var(--brand) 14%,transparent);color:var(--brand)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.filters select,.filters input{width:auto;min-width:180px}
+.empty{text-align:center;padding:36px 16px;color:var(--muted)}
+.empty .btn{margin-top:12px}
+
+/* chart */
+.bars{display:flex;align-items:flex-end;gap:14px;height:180px;padding-top:10px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-width:28px}
+.bar .stack{display:flex;flex-direction:column-reverse;border-radius:6px;overflow:hidden;background:var(--bg)}
+.bar .seg-p{background:var(--pass)} .bar .seg-f{background:var(--fail)} .bar .seg-s{background:var(--skip)}
+.bar .cap{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--muted);margin-top:12px;flex-wrap:wrap}
+.sq{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.progress{height:10px;border-radius:999px;background:var(--bg);overflow:hidden;display:flex}
+.progress span{display:block;height:100%}
+
+/* run execution */
+.case-row{display:grid;grid-template-columns:1fr auto;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);align-items:center}
+.case-row:last-child{border-bottom:0}
+.case-row .steps{font-size:13px;color:var(--muted);white-space:pre-line;margin-top:4px}
+.res{display:flex;gap:6px}
+.res button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 11px;font-size:13px;font-weight:600}
+.res button.on-p{background:var(--pass);border-color:var(--pass);color:#fff}
+.res button.on-f{background:var(--fail);border-color:var(--fail);color:#fff}
+.res button.on-s{background:var(--skip);border-color:var(--skip);color:#1b1b1b}
+
+/* plans */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px}
+.plan.current{border:2px solid var(--brand)}
+.plan .price{font-size:30px;font-weight:700;margin:6px 0 12px}
+
+/* modal & toast */
+.modal{position:fixed;inset:0;background:rgba(10,15,30,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}
+.modal.open{display:flex}
+.modal-box{background:var(--surface);border-radius:14px;padding:26px;width:100%;max-width:520px;max-height:90vh;overflow:auto}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
+.toast.show{opacity:1}
+.mobile-bar{display:none}
+
+@media (max-width:900px){
+  .tiles{grid-template-columns:1fr 1fr}
+  .cols,.plans{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .shell{grid-template-columns:1fr}
+  aside{position:fixed;inset:0 auto 0 0;width:260px;z-index:15;transform:translateX(-100%);transition:transform .2s;height:100%;padding-top:calc(20px + env(safe-area-inset-top,0px))}
+  aside.open{transform:none;box-shadow:0 0 0 100vmax rgba(10,15,30,.45)}
+  .mobile-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  .mobile-bar button{background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 10px}
+  main{padding:20px}
+  .case-row{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){aside,.toast{transition:none}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true"><div class="modal-box" id="modalBox"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- storage ---------- */
+const KEY='testflow_v1';
+const blank={users:[],session:null,data:{}};
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||structuredClone(blank)}catch(e){return structuredClone(blank)}}
+let db=load();
+// make sure the demo account always shows Umer Hassan
+(db.users||[]).forEach(u=>{if(u.email==='demo@testflow.app'){u.name='Umer Hassan'}});
+Object.values(db.data||{}).forEach(d=>{if(d&&d.company==='Demo Software House')d.company='TestFlow Demo Workspace'});
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}}
+save();
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=p=>p+'-'+Math.random().toString(36).slice(2,8);
+const $=s=>document.querySelector(s);
+const root=$('#root');
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2400)}
+
+/* ---------- demo data ---------- */
+function seed(company){
+  const p1={id:'PRJ-1',name:'E-commerce web app',desc:'Customer storefront and checkout'};
+  const p2={id:'PRJ-2',name:'Mobile banking app',desc:'Android and iOS release 4.2'};
+  const c=(id,pid,title,module,priority,steps,expected)=>({id,pid,title,module,priority,steps,expected});
+  const cases=[
+    c('TC-101','PRJ-1','Login with valid email and password','Login','High','1. Open login page\n2. Enter valid email and password\n3. Click Log in','User lands on the home page'),
+    c('TC-102','PRJ-1','Login with wrong password','Login','High','1. Enter valid email\n2. Enter wrong password\n3. Click Log in','Error "Email or password is incorrect" is shown'),
+    c('TC-110','PRJ-1','Add product to cart','Cart','Medium','1. Open a product\n2. Click Add to cart','Cart count increases by 1'),
+    c('TC-118','PRJ-1','Apply discount code at checkout','Checkout','High','1. Add product to cart\n2. Enter code SAVE10\n3. Click Apply','Total is reduced by 10%'),
+    c('TC-120','PRJ-1','Pay with credit card','Checkout','High','1. Go to checkout\n2. Enter test card details\n3. Click Pay','Order confirmation page is shown'),
+    c('TC-201','PRJ-2','Transfer funds to saved beneficiary','Transfers','High','1. Open Transfers\n2. Select beneficiary\n3. Enter amount and confirm with OTP','Transfer success message and updated balance'),
+    c('TC-205','PRJ-2','OTP expires after 2 minutes','Security','Medium','1. Request OTP\n2. Wait 2 minutes\n3. Enter OTP','Error "OTP has expired" is shown'),
+  ];
+  const runs=[
+    {id:'RUN-0401',pid:'PRJ-1',name:'Sprint 21 smoke',date:'2026-09-22',status:'Finished',results:{'TC-101':'p','TC-102':'p','TC-110':'p','TC-118':'p','TC-120':'p'}},
+    {id:'RUN-0407',pid:'PRJ-1',name:'Sprint 22 regression',date:'2026-10-01',status:'Finished',results:{'TC-101':'p','TC-102':'p','TC-110':'p','TC-118':'f','TC-120':'s'}},
+    {id:'RUN-0409',pid:'PRJ-2',name:'Release 4.2 checks',date:'2026-10-06',status:'Finished',results:{'TC-201':'p','TC-205':'f'}},
+  ];
+  const bugs=[
+    {id:'BUG-57',pid:'PRJ-1',caseId:'TC-118',title:'Discount code SAVE10 not applied to total',severity:'High',status:'Open',steps:'1. Add product to cart\n2. Enter code SAVE10\n3. Click Apply',created:'2026-10-01'},
+    {id:'BUG-58',pid:'PRJ-2',caseId:'TC-205',title:'Expired OTP is still accepted',severity:'Critical',status:'In progress',steps:'1. Request OTP\n2. Wait 2 minutes\n3. Enter OTP',created:'2026-10-06'},
+  ];
+  return {company,projects:[p1,p2],cases,runs,bugs,counters:{tc:300,run:410,bug:58,prj:2}};
+}
+
+function seedStarter(company){
+  return {company,
+    projects:[{id:'PRJ-1',name:'Sample project',desc:'Example project. Edit or delete it when you add your own.',sample:true}],
+    cases:[{id:'TC-101',pid:'PRJ-1',title:'Sample: Login with valid email and password',module:'Login',priority:'High',steps:'1. Open the login page\n2. Enter a valid email and password\n3. Click Log in',expected:'User lands on the home page',sample:true}],
+    runs:[],bugs:[],counters:{tc:101,run:0,bug:0,prj:1}};
+}
+const runId=n=>'RUN-'+String(n).padStart(4,'0');
+
+/* ---------- auth ---------- */
+const params=new URLSearchParams(location.search);
+let authMode=params.get('signup')?'signup':'login';
+const chosenPlan=params.get('plan')||'pro';
+
+function renderAuth(){
+  root.innerHTML=`<div class="auth"><div class="auth-box">
+    <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">${'<span></span>'.repeat(9)}</span>TestFlow</a>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="${authMode==='login'}" data-mode="login">Log in</button>
+      <button role="tab" aria-selected="${authMode==='signup'}" data-mode="signup">Sign up</button>
+    </div>
+    <form id="authForm" novalidate>
+      ${authMode==='signup'?`<label for="aName">Full name</label><input id="aName" autocomplete="name">
+      <label for="aCompany">Company</label><input id="aCompany" autocomplete="organization">`:''}
+      <label for="aEmail">Email</label><input id="aEmail" type="email" autocomplete="email">
+      <label for="aPass">Password</label><input id="aPass" type="password" autocomplete="${authMode==='signup'?'new-password':'current-password'}">
+      <div class="err" id="aErr" role="alert"></div>
+      <button class="btn btn-primary full" type="submit">${authMode==='signup'?'Create account':'Log in'}</button>
+    </form>
+    <p class="divider">Trying the prototype?</p>
+    <button class="btn btn-ghost full" id="demoBtn" type="button">Use demo account</button>
+  </div></div>`;
+  root.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{authMode=b.dataset.mode;renderAuth()});
+  $('#demoBtn').onclick=()=>{
+    let u=db.users.find(x=>x.email==='demo@testflow.app');
+    if(!u){u={name:'Umer Hassan',company:'TestFlow Demo Workspace',email:'demo@testflow.app',pass:'demo123',plan:'pro'};db.users.push(u);db.data[u.email]=seed(u.company)}
+    u.name='Umer Hassan';db.session=u.email;save();go('dashboard');
+  };
+  $('#authForm').onsubmit=e=>{
+    e.preventDefault();
+    const err=$('#aErr'),email=$('#aEmail').value.trim().toLowerCase(),pass=$('#aPass').value;
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return err.textContent='Enter a valid email, like name@company.com.';
+    if(authMode==='signup'){
+      const name=$('#aName').value.trim(),company=$('#aCompany').value.trim();
+      if(!name)return err.textContent='Enter your full name.';
+      if(!company)return err.textContent='Enter your company name.';
+      if(pass.length<6)return err.textContent='Password must be at least 6 characters.';
+      if(db.users.find(u=>u.email===email))return err.textContent='An account with this email already exists. Log in instead.';
+      const u={name,company,email,pass,plan:chosenPlan==='free'?'free':'pro'};
+      db.users.push(u);db.data[email]=seedStarter(company);db.session=email;save();
+      toast('Welcome, '+name.split(' ')[0]+'. Your workspace is ready. Start by creating your first project.');go('dashboard');
+    }else{
+      const u=db.users.find(x=>x.email===email);
+      if(!u||u.pass!==pass)return err.textContent='Email or password is incorrect.';
+      db.session=email;save();go('dashboard');
+    }
+  };
+}
+
+/* ---------- app shell ---------- */
+const me=()=>db.users.find(u=>u.email===db.session);
+const D=()=>db.data[db.session];
+const pname=id=>(D().projects.find(p=>p.id===id)||{}).name||'—';
+const NAV=[['dashboard','Dashboard'],['projects','Projects'],['cases','Test cases'],['runs','Test runs'],['bugs','Bugs'],['reports','Reports'],['billing','Plan and billing']];
+let view='dashboard',viewArg=null;
+
+function go(v,arg){view=v;viewArg=arg??null;render()}
+function render(){
+  if(!db.session||!me())return renderAuth();
+  const u=me();
+  root.innerHTML=`<div class="mobile-bar"><span class="logo"><span class="logo-mark" aria-hidden="true">${'<span></span>'.repeat(9)}</span>TestFlow</span><button id="menuBtn" aria-controls="side" aria-expanded="false">Menu</button></div>
+  <div class="shell">
+    <aside id="side">
+      <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">${'<span></span>'.repeat(9)}</span>TestFlow</a>
+      <nav class="nav" aria-label="App">${NAV.map(([k,l])=>`<button data-go="${k}" ${view===k||(view==='run'&&k==='runs')?'aria-current="page"':''}>${l}</button>`).join('')}</nav>
+      <div class="who"><b>${esc(u.name)}</b><span class="muted">${esc(D().company)}</span><br><span class="plan-pill">${u.plan==='free'?'Free plan':u.plan==='team'?'Team plan':'Pro trial'}</span>
+        <div style="margin-top:12px"><button class="btn btn-ghost btn-sm" id="logout">Log out</button></div></div>
+    </aside>
+    <main id="main"></main>
+  </div>`;
+  root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+  $('#logout').onclick=()=>{db.session=null;save();authMode='login';render()};
+  const side=$('#side'),mb=$('#menuBtn');
+  mb.onclick=()=>{const o=side.classList.toggle('open');mb.setAttribute('aria-expanded',o)};
+  ({dashboard,projects,cases,runs,run,bugs,reports,billing})[view]();
+  window.scrollTo(0,0);
+}
+
+/* ---------- helpers ---------- */
+function stats(run){const v=Object.values(run.results);return{p:v.filter(x=>x==='p').length,f:v.filter(x=>x==='f').length,s:v.filter(x=>x==='s').length,t:v.length}}
+const resTag=r=>r==='p'?'<span class="tag t-pass">Passed</span>':r==='f'?'<span class="tag t-fail">Failed</span>':r==='s'?'<span class="tag t-skip">Blocked</span>':'<span class="tag t-idle">Not run</span>';
+const sevTag=s=>`<span class="tag ${s==='Critical'||s==='High'?'t-fail':s==='Medium'?'t-skip':'t-idle'}">${s}</span>`;
+const statusTag=s=>`<span class="tag ${s==='Fixed'||s==='Closed'?'t-pass':s==='In progress'?'t-brand':'t-fail'}">${s}</span>`;
+function openModal(html,onMount){$('#modalBox').innerHTML=html;$('#modal').classList.add('open');onMount&&onMount();const f=$('#modalBox').querySelector('input,select,textarea,button');f&&f.focus()}
+function closeModal(){$('#modal').classList.remove('open')}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+const projOptions=sel=>D().projects.map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
+function limitReached(kind){const u=me();if(u.plan!=='free')return false;
+  if(kind==='project'&&D().projects.length>=1){toast('The Free plan includes 1 project. Delete the sample project or upgrade to Pro for unlimited projects.');return true}
+  if(kind==='case'&&D().cases.length>=100){toast('The Free plan includes 100 test cases. Upgrade to Pro for more.');return true}
+  return false}
+
+/* ---------- dashboard ---------- */
+function dashboard(){
+  const d=D(),fin=d.runs.filter(r=>r.status==='Finished');
+  const tot=fin.reduce((a,r)=>{const s=stats(r);a.p+=s.p;a.t+=s.t;return a},{p:0,t:0});
+  const rate=tot.t?Math.round(tot.p/tot.t*100):0;
+  const open=d.bugs.filter(b=>b.status==='Open'||b.status==='In progress');
+  const last=d.runs.slice(-6);
+  $('#main').innerHTML=`<div class="top"><div><h1>Dashboard</h1><p class="muted" style="margin:0">Release health across all projects</p></div>
+    <button class="btn btn-primary" id="newRun">Start test run</button></div>
+  ${checklist(d)}
+  <div class="tiles">
+    <div class="tile"><div class="n">${d.projects.length}</div><div class="l">Projects</div></div>
+    <div class="tile"><div class="n">${d.cases.length}</div><div class="l">Test cases</div></div>
+    <div class="tile"><div class="n" style="color:var(--pass)">${rate}%</div><div class="l">Pass rate (finished runs)</div></div>
+    <div class="tile"><div class="n" style="color:var(--fail)">${open.length}</div><div class="l">Open bugs</div></div>
+  </div>
+  <div class="cols">
+    <div class="panel"><h2>Recent test runs</h2>
+      ${last.length?`<div class="bars">${last.map(r=>{const s=stats(r),max=Math.max(1,...last.map(x=>stats(x).t));return`<div class="bar" title="${esc(r.name)}"><div class="stack" style="height:${Math.max(6,s.t/max*100)}%">${s.p?`<div class="seg-p" style="flex:${s.p}"></div>`:''}${s.s?`<div class="seg-s" style="flex:${s.s}"></div>`:''}${s.f?`<div class="seg-f" style="flex:${s.f}"></div>`:''}${!s.t?'<div style="flex:1"></div>':''}</div><div class="cap">${r.id}</div></div>`}).join('')}</div>
+      <div class="legend"><span><span class="sq" style="background:var(--pass)"></span>Passed</span><span><span class="sq" style="background:var(--fail)"></span>Failed</span><span><span class="sq" style="background:var(--skip)"></span>Blocked</span></div>`
+      :`<div class="empty">No test runs yet.</div>`}
+    </div>
+    <div class="panel"><h2>Open bugs</h2>
+      ${open.length?`<div class="table-wrap"><table><tbody>${open.slice(0,5).map(b=>`<tr><td><span class="mono">${b.id}</span><br>${esc(b.title)}</td><td>${sevTag(b.severity)}</td></tr>`).join('')}</tbody></table></div>`
+      :`<div class="empty">No open bugs. Nice work.</div>`}
+    </div>
+  </div>`;
+  $('#newRun').onclick=newRunModal;
+  document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{const k=b.dataset.step;
+    if(k==='project'){go('projects');setTimeout(()=>$('#addP').click(),0)}
+    else if(k==='case'){go('cases');setTimeout(()=>$('#addC').click(),0)}
+    else if(k==='run'){newRunModal()}
+    else go('bugs');});
+}
+function checklist(d){
+  const steps=[
+    ['project','Create your own project',d.projects.some(p=>!p.sample)],
+    ['case','Add a test case',d.cases.some(c=>!c.sample)],
+    ['run','Start a test run',d.runs.length>0],
+    ['bug','Report a bug from a failed case',d.bugs.length>0]];
+  const done=steps.filter(x=>x[2]).length;
+  if(done===steps.length)return '';
+  return `<div class="panel" aria-label="Getting started"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><h2 style="margin:0">Get started with TestFlow</h2><span class="muted" style="font-size:14px">${done} of ${steps.length} done</span></div>
+  <div class="progress" style="margin:12px 0 6px"><span style="width:${done/steps.length*100}%;background:var(--pass)"></span></div>
+  ${steps.map(([k,l,ok],i)=>`<div class="case-row"><div>${ok?'<span class="tag t-pass">Done</span>':'<span class="tag t-idle">To do</span>'} <b style="margin-left:6px">${i+1}. ${l}</b></div>${ok?'':`<button class="btn btn-ghost btn-sm" data-step="${k}">${k==='project'?'Create project':k==='case'?'Add test case':k==='run'?'Start test run':'Go to bugs'}</button>`}</div>`).join('')}
+  </div>`;
+}
+
+/* ---------- projects ---------- */
+function projects(){
+  const d=D();
+  $('#main').innerHTML=`<div class="top"><div><h1>Projects</h1><p class="muted" style="margin:0">Group test cases and runs by product</p></div>
+    <button class="btn btn-primary" id="addP">New project</button></div>
+  <div class="panel"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Test cases</th><th>Runs</th><th>Open bugs</th><th></th></tr></thead><tbody>
+  ${d.projects.map(p=>`<tr><td><b>${esc(p.name)}</b><br><span class="muted">${esc(p.desc)}</span></td>
+    <td>${d.cases.filter(c=>c.pid===p.id).length}</td><td>${d.runs.filter(r=>r.pid===p.id).length}</td>
+    <td>${d.bugs.filter(b=>b.pid===p.id&&b.status!=='Closed'&&b.status!=='Fixed').length}</td>
+    <td><div class="actions"><button class="btn btn-ghost btn-sm" data-cases="${p.id}">Test cases</button><button class="btn btn-ghost btn-sm" data-pedit="${p.id}">Edit</button><button class="btn btn-danger btn-sm" data-pdel="${p.id}">Delete</button></div></td></tr>`).join('')}
+  </tbody></table></div>${d.projects.length?'':'<div class="empty">Create your first project to start adding test cases.</div>'}</div>`;
+  $('#addP').onclick=()=>{if(limitReached('project'))return;projectModal(null)};
+  document.querySelectorAll('[data-pedit]').forEach(b=>b.onclick=()=>projectModal(d.projects.find(p=>p.id===b.dataset.pedit)));
+  document.querySelectorAll('[data-pdel]').forEach(b=>b.onclick=()=>{const p=d.projects.find(x=>x.id===b.dataset.pdel);
+    const nc=d.cases.filter(c=>c.pid===p.id).length;
+    if(!confirm('Delete "'+p.name+'"? Its '+nc+' test cases, runs and bugs will also be deleted. This can\'t be undone.'))return;
+    d.projects=d.projects.filter(x=>x.id!==p.id);d.cases=d.cases.filter(c=>c.pid!==p.id);d.runs=d.runs.filter(r=>r.pid!==p.id);d.bugs=d.bugs.filter(x=>x.pid!==p.id);
+    save();toast('Project deleted.');projects()});
+  document.querySelectorAll('[data-cases]').forEach(b=>b.onclick=()=>go('cases',b.dataset.cases));
+}
+
+function projectModal(p){
+  const edit=!!p;p=p||{name:'',desc:''};
+  openModal(`<h2>${edit?'Edit project':'New project'}</h2>
+    <form id="pf" novalidate><label for="pn">Project name</label><input id="pn" value="${esc(p.name)}" placeholder="e.g. Company website"><label for="pdsc">Description</label><input id="pdsc" value="${esc(p.desc)}" placeholder="What are you testing?">
+    <div class="err" id="pe"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary">${edit?'Save changes':'Create project'}</button></div></form>`,()=>{
+    $('#pf').onsubmit=e=>{e.preventDefault();const n=$('#pn').value.trim(),d=D();if(!n)return $('#pe').textContent='Enter a project name.';
+      if(d.projects.some(x=>x.name.toLowerCase()===n.toLowerCase()&&x!==p))return $('#pe').textContent='A project with this name already exists.';
+      if(edit){p.name=n;p.desc=$('#pdsc').value.trim();delete p.sample}
+      else{d.counters.prj++;d.projects.push({id:'PRJ-'+d.counters.prj,name:n,desc:$('#pdsc').value.trim()})}
+      save();closeModal();toast(edit?'Changes saved.':'Project created.');go('projects')}});
+}
+
+/* ---------- test cases ---------- */
+function cases(){
+  const d=D();let pid=viewArg||'all',q='';
+  $('#main').innerHTML=`<div class="top"><div><h1>Test cases</h1><p class="muted" style="margin:0">Steps and expected results for each feature</p></div>
+    <button class="btn btn-primary" id="addC">New test case</button></div>
+  <div class="filters"><select id="fp" aria-label="Filter by project"><option value="all">All projects</option>${projOptions(pid)}</select>
+  <input id="fq" placeholder="Search test cases" aria-label="Search test cases"></div>
+  <div class="panel"><div class="table-wrap" id="ct"></div></div>`;
+  const draw=()=>{const list=d.cases.filter(c=>(pid==='all'||c.pid===pid)&&(c.title+c.id+c.module).toLowerCase().includes(q));
+    $('#ct').innerHTML=list.length?`<table><thead><tr><th>ID</th><th>Title</th><th>Project</th><th>Module</th><th>Priority</th><th></th></tr></thead><tbody>
+    ${list.map(c=>`<tr><td class="mono">${c.id}</td><td>${esc(c.title)}</td><td>${esc(pname(c.pid))}</td><td>${esc(c.module)}</td><td>${sevTag(c.priority)}</td>
+    <td><div class="actions"><button class="btn btn-ghost btn-sm" data-edit="${c.id}">Edit</button><button class="btn btn-danger btn-sm" data-del="${c.id}">Delete</button></div></td></tr>`).join('')}</tbody></table>`
+    :`<div class="empty">No test cases match. Add one to get started.</div>`;
+    document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>caseModal(d.cases.find(c=>c.id===b.dataset.edit)));
+    document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete '+b.dataset.del+'? This can\'t be undone.')){d.cases=d.cases.filter(c=>c.id!==b.dataset.del);save();toast('Test case deleted.');draw()}});};
+  $('#fp').onchange=e=>{pid=e.target.value;draw()};
+  $('#fq').oninput=e=>{q=e.target.value.toLowerCase();draw()};
+  $('#addC').onclick=()=>{if(!limitReached('case'))caseModal(null,pid!=='all'?pid:null)};
+  draw();
+}
+function caseModal(c,defP){
+  const d=D(),edit=!!c;c=c||{title:'',pid:defP||(d.projects[0]||{}).id,module:'',priority:'Medium',steps:'',expected:''};
+  if(!d.projects.length)return toast('Create a project first.');
+  openModal(`<h2>${edit?'Edit test case '+c.id:'New test case'}</h2><form id="cf" novalidate>
+    <label for="ct1">Title</label><input id="ct1" value="${esc(c.title)}">
+    <label for="cp">Project</label><select id="cp">${projOptions(c.pid)}</select>
+    <label for="cm">Module</label><input id="cm" value="${esc(c.module)}" placeholder="e.g. Login, Checkout">
+    <label for="cpr">Priority</label><select id="cpr">${['High','Medium','Low'].map(x=>`<option ${x===c.priority?'selected':''}>${x}</option>`).join('')}</select>
+    <label for="cs">Steps</label><textarea id="cs" placeholder="1. Open the page&#10;2. ...">${esc(c.steps)}</textarea>
+    <label for="ce">Expected result</label><input id="ce" value="${esc(c.expected)}">
+    <div class="err" id="cerr"></div>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary">${edit?'Save changes':'Add test case'}</button></div></form>`,()=>{
+    $('#cf').onsubmit=e=>{e.preventDefault();const t=$('#ct1').value.trim(),s=$('#cs').value.trim(),ex=$('#ce').value.trim();
+      if(!t)return $('#cerr').textContent='Enter a title for the test case.';
+      if(!s)return $('#cerr').textContent='Add at least one step.';
+      if(!ex)return $('#cerr').textContent='Enter the expected result.';
+      const obj={title:t,pid:$('#cp').value,module:$('#cm').value.trim()||'General',priority:$('#cpr').value,steps:s,expected:ex};
+      if(edit){Object.assign(c,obj);delete c.sample}else{d.counters.tc++;d.cases.push({id:'TC-'+d.counters.tc,...obj})}
+      save();closeModal();toast(edit?'Changes saved.':'Test case added.');cases()}});
+}
+
+/* ---------- test runs ---------- */
+function runs(){
+  const d=D();
+  $('#main').innerHTML=`<div class="top"><div><h1>Test runs</h1><p class="muted" style="margin:0">Record results for each release or sprint</p></div>
+    <button class="btn btn-primary" id="nr">Start test run</button></div>
+  <div class="panel"><div class="table-wrap">${d.runs.length?`<table><thead><tr><th>Run</th><th>Project</th><th>Date</th><th>Progress</th><th>Status</th><th></th></tr></thead><tbody>
+  ${d.runs.slice().reverse().map(r=>{const s=stats(r),done=Object.values(r.results).filter(Boolean).length;return`<tr><td><span class="mono">${r.id}</span><br>${esc(r.name)}</td><td>${esc(pname(r.pid))}</td><td>${r.date}</td>
+  <td style="min-width:140px"><div class="progress"><span style="width:${s.t?s.p/s.t*100:0}%;background:var(--pass)"></span><span style="width:${s.t?s.f/s.t*100:0}%;background:var(--fail)"></span><span style="width:${s.t?s.s/s.t*100:0}%;background:var(--skip)"></span></div><span class="muted" style="font-size:12px">${s.p} passed, ${s.f} failed, ${s.s} blocked</span></td>
+  <td>${r.status==='Finished'?'<span class="tag t-pass">Finished</span>':'<span class="tag t-brand">In progress</span>'}</td>
+  <td><button class="btn btn-ghost btn-sm" data-open="${r.id}">${r.status==='Finished'?'View':'Continue'}</button></td></tr>`}).join('')}</tbody></table>`
+  :'<div class="empty">No test runs yet. Start one to record results.</div>'}</div></div>`;
+  $('#nr').onclick=newRunModal;
+  document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>go('run',b.dataset.open));
+}
+function newRunModal(){
+  const d=D();if(!d.projects.length)return toast('Create a project first.');
+  openModal(`<h2>Start test run</h2><form id="rf" novalidate>
+    <label for="rn">Run name</label><input id="rn" placeholder="e.g. Sprint 23 regression">
+    <label for="rp">Project</label><select id="rp">${projOptions()}</select>
+    <p class="muted" id="rc" style="font-size:14px;margin:10px 0 0"></p>
+    <div class="err" id="rerr"></div>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary">Start run</button></div></form>`,()=>{
+    const upd=()=>{$('#rc').textContent=d.cases.filter(c=>c.pid===$('#rp').value).length+' test cases from this project will be included.'};
+    $('#rp').onchange=upd;upd();
+    $('#rf').onsubmit=e=>{e.preventDefault();const n=$('#rn').value.trim(),pid=$('#rp').value,list=d.cases.filter(c=>c.pid===pid);
+      if(!n)return $('#rerr').textContent='Enter a name for the run.';
+      if(!list.length)return $('#rerr').textContent='This project has no test cases yet. Add test cases first.';
+      d.counters.run++;const id=runId(d.counters.run);const results={};list.forEach(c=>results[c.id]=null);
+      d.runs.push({id,pid,name:n,date:new Date().toISOString().slice(0,10),status:'In progress',results});save();closeModal();toast('Test run started.');go('run',id)}});
+}
+function run(){
+  const d=D(),r=d.runs.find(x=>x.id===viewArg);if(!r)return go('runs');
+  const draw=()=>{const s=stats(r),done=Object.values(r.results).filter(Boolean).length,total=Object.keys(r.results).length;
+  $('#main').innerHTML=`<div class="top"><div><p class="mono muted" style="margin:0">${r.id} · ${esc(pname(r.pid))}</p><h1>${esc(r.name)}</h1>
+    <p class="muted" style="margin:0">${done} of ${total} cases run: ${s.p} passed, ${s.f} failed, ${s.s} blocked</p></div>
+    <div class="actions"><button class="btn btn-ghost" id="back">All runs</button>${r.status!=='Finished'?'<button class="btn btn-primary" id="fin">Finish run</button>':''}</div></div>
+  <div class="panel"><div class="progress" style="margin-bottom:10px"><span style="width:${s.p/total*100}%;background:var(--pass)"></span><span style="width:${s.f/total*100}%;background:var(--fail)"></span><span style="width:${s.s/total*100}%;background:var(--skip)"></span></div>
+  ${Object.keys(r.results).map(cid=>{const c=d.cases.find(x=>x.id===cid)||{title:'(deleted case)',steps:'',expected:''},v=r.results[cid],bug=d.bugs.find(b=>b.caseId===cid&&b.runId===r.id);
+    return`<div class="case-row"><div><span class="mono">${cid}</span> <b>${esc(c.title)}</b> ${resTag(v)}<div class="steps">${esc(c.steps)}\nExpected: ${esc(c.expected)}</div>
+    ${v==='f'?(bug?`<p style="margin:8px 0 0;font-size:13px">Bug <span class="mono">${bug.id}</span> reported</p>`:`<button class="btn btn-danger btn-sm" style="margin-top:8px" data-bug="${cid}">Report bug</button>`):''}</div>
+    ${r.status!=='Finished'?`<div class="res" role="group" aria-label="Result for ${cid}"><button data-r="p" data-c="${cid}" class="${v==='p'?'on-p':''}">Pass</button><button data-r="f" data-c="${cid}" class="${v==='f'?'on-f':''}">Fail</button><button data-r="s" data-c="${cid}" class="${v==='s'?'on-s':''}">Blocked</button></div>`:''}</div>`}).join('')}</div>`;
+  $('#back').onclick=()=>go('runs');
+  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{r.results[b.dataset.c]=b.dataset.r;save();draw();if(b.dataset.r==='f')toast('Marked as failed. Report a bug so developers can fix it.')});
+  document.querySelectorAll('[data-bug]').forEach(b=>b.onclick=()=>bugModal(null,{caseId:b.dataset.bug,runId:r.id,pid:r.pid},draw));
+  const fin=$('#fin');fin&&(fin.onclick=()=>{const left=Object.values(r.results).filter(x=>!x).length;
+    if(left&&!confirm(left+' test cases have no result yet. Finish the run anyway?'))return;
+    Object.keys(r.results).forEach(k=>{if(!r.results[k])r.results[k]='s'});r.status='Finished';save();toast('Run finished.');draw()});};
+  draw();
+}
+
+/* ---------- bugs ---------- */
+function bugs(){
+  const d=D();let st='all';
+  $('#main').innerHTML=`<div class="top"><div><h1>Bugs</h1><p class="muted" style="margin:0">Defects found during testing</p></div>
+    <button class="btn btn-primary" id="nb">Report bug</button></div>
+  <div class="filters"><select id="fs" aria-label="Filter by status"><option value="all">All statuses</option><option>Open</option><option>In progress</option><option>Fixed</option><option>Closed</option></select></div>
+  <div class="panel"><div class="table-wrap" id="bt"></div></div>`;
+  const draw=()=>{const list=d.bugs.filter(b=>st==='all'||b.status===st).slice().reverse();
+    $('#bt').innerHTML=list.length?`<table><thead><tr><th>ID</th><th>Title</th><th>Project</th><th>Severity</th><th>Status</th></tr></thead><tbody>
+    ${list.map(b=>`<tr><td class="mono">${b.id}</td><td>${esc(b.title)}${b.caseId?`<br><span class="muted" style="font-size:13px">From ${b.caseId}</span>`:''}</td><td>${esc(pname(b.pid))}</td><td>${sevTag(b.severity)}</td>
+    <td><select data-st="${b.id}" aria-label="Status for ${b.id}" style="min-width:130px">${['Open','In progress','Fixed','Closed'].map(x=>`<option ${x===b.status?'selected':''}>${x}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>`
+    :'<div class="empty">No bugs with this status.</div>';
+    document.querySelectorAll('[data-st]').forEach(s=>s.onchange=()=>{d.bugs.find(b=>b.id===s.dataset.st).status=s.value;save();toast(s.dataset.st+' moved to '+s.value+'.')});};
+  $('#fs').onchange=e=>{st=e.target.value;draw()};
+  $('#nb').onclick=()=>bugModal(null,{},bugs);
+  draw();
+}
+function bugModal(_,ctx,after){
+  const d=D(),c=ctx.caseId?d.cases.find(x=>x.id===ctx.caseId):null;
+  openModal(`<h2>Report bug</h2><form id="bf" novalidate>
+    <label for="bt1">Title</label><input id="bt1" value="${c?esc(c.title+': actual result differs from expected'):''}">
+    <label for="bp">Project</label><select id="bp">${projOptions(ctx.pid)}</select>
+    <label for="bs">Severity</label><select id="bs"><option>Critical</option><option selected>High</option><option>Medium</option><option>Low</option></select>
+    <label for="bst">Steps to reproduce</label><textarea id="bst">${c?esc(c.steps):''}</textarea>
+    <label for="ba">Actual result</label><input id="ba" placeholder="What happened instead?">
+    <div class="err" id="berr"></div>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary">Report bug</button></div></form>`,()=>{
+    $('#bf').onsubmit=e=>{e.preventDefault();const t=$('#bt1').value.trim(),a=$('#ba').value.trim();
+      if(!t)return $('#berr').textContent='Enter a bug title.';
+      if(!a)return $('#berr').textContent='Describe the actual result.';
+      d.counters.bug++;const id='BUG-'+d.counters.bug;
+      d.bugs.push({id,pid:$('#bp').value,caseId:ctx.caseId||null,runId:ctx.runId||null,title:t,severity:$('#bs').value,status:'Open',steps:$('#bst').value.trim(),actual:a,created:new Date().toISOString().slice(0,10)});
+      save();closeModal();toast('Bug '+id+' reported.');after&&after()}});
+}
+
+/* ---------- reports ---------- */
+function reports(){
+  const d=D();
+  const rows=d.projects.map(p=>{const rs=d.runs.filter(r=>r.pid===p.id&&r.status==='Finished');const last=rs[rs.length-1];const s=last?stats(last):{p:0,f:0,s:0,t:0};
+    return{p,last,s,rate:s.t?Math.round(s.p/s.t*100):null,open:d.bugs.filter(b=>b.pid===p.id&&(b.status==='Open'||b.status==='In progress')).length}});
+  $('#main').innerHTML=`<div class="top"><div><h1>Reports</h1><p class="muted" style="margin:0">Latest finished run for each project</p></div>
+    <button class="btn btn-ghost" id="csv">Export CSV</button></div>
+  <div class="panel"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Latest run</th><th>Pass rate</th><th>Failed</th><th>Open bugs</th><th>Release status</th></tr></thead><tbody>
+  ${rows.map(x=>`<tr><td><b>${esc(x.p.name)}</b></td><td>${x.last?`<span class="mono">${x.last.id}</span>`:'—'}</td>
+  <td style="min-width:160px">${x.rate===null?'<span class="muted">No finished runs</span>':`<div class="progress"><span style="width:${x.rate}%;background:var(--pass)"></span></div><span style="font-size:13px">${x.rate}%</span>`}</td>
+  <td>${x.s.f}</td><td>${x.open}</td>
+  <td>${x.rate===null?'<span class="tag t-idle">Not tested</span>':x.open===0&&x.rate>=95?'<span class="tag t-pass">Ready to release</span>':'<span class="tag t-fail">Not ready</span>'}</td></tr>`).join('')}
+  </tbody></table></div></div>
+  <p class="muted" style="font-size:14px">A project is ready to release when the latest run has a pass rate of 95% or more and there are no open bugs.</p>`;
+  $('#csv').onclick=()=>{
+    if(me().plan==='free')return toast('Export is part of the Pro plan. Upgrade to export reports.');
+    const lines=[['Project','Latest run','Pass rate','Failed','Open bugs']].concat(rows.map(x=>[x.p.name,x.last?x.last.id:'',x.rate===null?'':x.rate+'%',x.s.f,x.open]));
+    const csv=lines.map(l=>l.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+    try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='testflow-report.csv';a.click();toast('Report exported.')}catch(e){toast('Export is not available in this preview.')}
+  };
+}
+
+/* ---------- billing ---------- */
+function billing(){
+  const u=me();
+  const plans=[['free','Free','$0','1 project, 2 users, 100 test cases'],['pro','Pro','$15 / user / month','Unlimited projects, reports and export'],['team','Team','$39 / user / month','Integrations, roles and priority support']];
+  $('#main').innerHTML=`<div class="top"><div><h1>Plan and billing</h1><p class="muted" style="margin:0">You're on the ${u.plan==='free'?'Free plan':u.plan==='team'?'Team plan':'Pro plan (14-day trial)'}.</p></div></div>
+  <div class="plans">${plans.map(([k,n,p,f])=>`<div class="plan ${u.plan===k?'current':''}"><h2>${n}</h2><div class="price">${p}</div><p class="muted">${f}</p>
+    ${u.plan===k?'<span class="tag t-brand">Current plan</span>':`<button class="btn btn-primary btn-sm" data-plan="${k}">Switch to ${n}</button>`}</div>`).join('')}</div>
+  <p class="muted" style="font-size:14px;margin-top:16px">Prototype note: payments are simulated. In the full product, plan changes would go through a payment provider such as Stripe.</p>`;
+  document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{u.plan=b.dataset.plan;save();toast('Switched to the '+b.textContent.replace('Switch to ','')+' plan.');render()});
+}
+
+render();
+</script>
+</body>
+</html>
